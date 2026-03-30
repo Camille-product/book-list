@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>読書リスト</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     ★ 設定: スプレッドシートのCSV公開URLをここに貼る
+     取得方法は下部の「設定ガイド」を参照
+============================================================ -->
+<script>
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTXTAYQJslt0BFR5kjl13r5YhGugY0lfFJRdc8HaM6RSGxTklAIMsK2ou4g5gforbNFyNnhbRdCHLNT/pub?output=csv";
+  // 例: "https://docs.google.com/spreadsheets/d/XXXXXXXX/pub?output=csv"
+</script>
+
+<header class="site-header">
+  <div class="site-title">
+    <span>My Reading Log</span>
+    Camille's Biblio
+  </div>
+  <div class="header-stats">
+    <div class="stat-block">
+      <div class="num" id="total-count">—</div>
+      <div class="lbl">冊読了</div>
+    </div>
+  </div>
+</header>
+
+
+
+<div class="controls-bar">
+  <!-- ジャンルフィルター -->
+  <div class="filter-group">
+    <span class="filter-label">ジャンル</span>
+    <div id="genre-filters" style="display:flex;gap:5px;flex-wrap:wrap; color:white;"></div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- 読書年フィルター -->
+  <div class="filter-group">
+    <span class="filter-label">読書年</span>
+    <div id="year-filters" style="display:flex;gap:5px;flex-wrap:wrap;">
+      <button class="pill active" data-year="all">すべて</button>
+      <button class="pill" data-year="2026">2026</button>
+      <button class="pill" data-year="2025">2025</button>
+      <button class="pill" data-year="2024">2024</button>
+      <button class="pill" data-year="before2024">〜2023</button>
+    </div>
+  </div>
+
+  <!-- 右側 -->
+  <div class="right-controls">
+    <select class="sort-select" id="sort-select">
+      <option value="year_desc">読書年（新→古）</option>
+      <option value="year_asc">読書年（古→新）</option>
+      <option value="title_asc">タイトル順</option>
+    </select>
+    <div class="view-toggle">
+      <button class="view-btn active" id="grid-btn" title="グリッド表示">⊞</button>
+      <button class="view-btn" id="list-btn" title="リスト表示">☰</button>
+    </div>
+  </div>
+</div>
+
+<div class="top-affiliate aff">
+  <div class="aff-contents">
+
+    <!---unlimited-->
+    <div style="border:1px solid #95a5a6;border-radius:.75rem;background:#362f2f;width:500px;padding:10px;display:flex;gap:10px;">
+
+  <!-- 画像 -->
+  <a href="https://amzn.to/3PCzu2h" target="_blank">
+    <img src="primereading.jpg" style="width:150px; border-radius: 10px;">
+  </a>
+  <div style="font-size:14px;text-align:left;">
+    <a href="https://amzn.to/3PCzu2h" target="_blank" style="text-decoration:none;color:#333;">
+      Prime reading
+    </a>
+    <p style="margin:8px 0;">Prime会員なら読み放題（書籍、マンガ、雑誌、ほか）Prime reading 全てのPrime readingのタイトルをチェック</p>
+    <a href="https://amzn.to/3PCzu2h" target="_blank">
+      <div style="background:#5d5b99;color:#fff;padding:6px 12px;border-radius:20px;display:inline-block; margin-top:10px;">
+        Prime readingを始める
+      </div>
+    </a>
+  </div>
+
+</div>
+
+    <!--kindle-->
+    <div style="border:1px solid #95a5a6;border-radius:.75rem;background:#fff;width:500px;padding:10px;display:flex;gap:10px;">
+  <a href="https://www.amazon.co.jp/dp/B0CFPL6CFY" target="_blank">
+    <img src="https://m.media-amazon.com/images/I/61SwWE+TevL._AC_UY436_FMwebp_QL65_.jpg" style="width:150px;">
+  </a>
+  <div style="font-size:14px;text-align:left;">
+    <a href="https://www.amazon.co.jp/dp/B0CFPL6CFY" target="_blank" style="text-decoration:none;color:#333;">
+      Kindle Paperwhite（7インチ・16GB）
+    </a>
+    <p style="margin:8px 0;">Amazon Kindle Paperwhite (16GB) 7インチディスプレイ、色調調節ライト、12週間持続バッテリー、広告なし、ブラック</p>
+    <a href="https://www.amazon.co.jp/dp/B0CFPL6CFY" target="_blank">
+      <div style="background:#5d5b99;color:#fff;padding:6px 12px;border-radius:20px;display:inline-block;">
+        Amazonで見る</div>
+        </a>
+  </div>
+  </div>
+  </div>
+  </div>
+
+</div>
+    </a>
+  </div>
+
+</div>
+  </div>
+</div>
+
+
+<main class="main">
+  <div id="loading" class="state-msg">
+    <div class="spinner"></div>
+    <p>データを読み込み中...</p>
+  </div>
+
+  <div id="error" class="state-msg hidden">
+    <p style="font-size:28px;margin-bottom:.75rem;">📋</p>
+    <p id="error-msg"></p>
+    <p style="margin-top:.5rem;font-size:12px;color:var(--ink-soft);">
+      ページ下部の「設定ガイド」を参考に <code>SHEET_CSV_URL</code> を設定してください。
+    </p>
+  </div>
+
+  <div id="content" class="hidden">
+    <p class="result-info" id="result-info"></p>
+    <div class="grid-view" id="grid-view"></div>
+    <div class="list-view hidden" id="list-view"></div>
+    <div class="empty-state hidden" id="empty-state">条件に合う本が見つかりませんでした。</div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-cover" id="modal-cover">
+      <button class="modal-close" id="modal-close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-genre" id="modal-genre"></div>
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-author" id="modal-author"></div>
+      <div id="modal-comment-wrap" class="hidden">
+        <div class="modal-comment-label">コメント</div>
+        <div class="modal-comment" id="modal-comment"></div>
+      </div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-affiliate aff">
+  <div class="aff-contents">
+    <table border="0" cellpadding="0" cellspacing="0"><tr><td><div style="border:1px solid #95a5a6;border-radius:.75rem;background-color:#FFFFFF;width:504px;margin:0px;padding:5px;text-align:center;overflow:hidden;"><table><tr><td style="width:240px"><a href="https://hb.afl.rakuten.co.jp/ichiba/51c33f41.98a0b644.51c33f42.95cde39e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbiccamera%2F4560470103787%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><img src="https://hbb.afl.rakuten.co.jp/hgb/51c33f41.98a0b644.51c33f42.95cde39e/?me_id=1269553&item_id=14729604&pc=https%3A%2F%2Fthumbnail.image.rakuten.co.jp%2F%400_mall%2Fbiccamera%2Fcabinet%2Fproduct%2F10224%2F00000012851396_a01.jpg%3F_ex%3D240x240&s=240x240&t=picttext" border="0" style="margin:2px" alt="[商品価格に関しましては、リンクが作成された時点と現時点で情報が変更されている場合がございます。]" title="[商品価格に関しましては、リンクが作成された時点と現時点で情報が変更されている場合がございます。]"></a></td><td style="vertical-align:top;width:248px;display: block;"><p style="font-size:12px;line-height:1.4em;text-align:left;margin:0px;padding:2px 6px;word-wrap:break-word"><a href="https://hb.afl.rakuten.co.jp/ichiba/51c33f41.98a0b644.51c33f42.95cde39e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbiccamera%2F4560470103787%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;">【エントリーで最大全額ポイント還元｜4/5まで】 KOBO｜コボ 電子書籍リーダー Kobo Clara BW ブラック N365-KJ-BK-S-EP [6インチ /防水]</a><br><span >価格：22,800円（税込、送料無料)</span> <span style="color:#BBB">(2026/3/30時点)</span></p><div style="margin:10px;"><a href="https://hb.afl.rakuten.co.jp/ichiba/51c33f41.98a0b644.51c33f42.95cde39e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbiccamera%2F4560470103787%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><img src="https://static.affiliate.rakuten.co.jp/makelink/rl.svg" style="float:left;max-height:27px;width:auto;margin-top:0" ></a><a href="https://hb.afl.rakuten.co.jp/ichiba/51c33f41.98a0b644.51c33f42.95cde39e/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fbiccamera%2F4560470103787%2F%3Fscid%3Daf_pc_bbtn&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ==" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><div style="float:right;width:41%;height:27px;background-color:#bf0000;color:#fff!important;font-size:12px;font-weight:500;line-height:27px;margin-left:1px;padding: 0 12px;border-radius:16px;cursor:pointer;text-align:center;"> 楽天で購入 </div></a></div></td></tr></table></div><br><p style="color:#000000;font-size:12px;line-height:1.4em;margin:5px;word-wrap:break-word"></p></td></tr></table>
+    <table border="0" cellpadding="0" cellspacing="0"><tr><td><div style="border:1px solid #95a5a6;border-radius:.75rem;background-color:#FFFFFF;width:504px;margin:0px;padding:5px;text-align:center;overflow:hidden;"><table><tr><td style="width:240px"><a href="https://hb.afl.rakuten.co.jp/ichiba/5260af3a.00bcaa54.5260af3b.012ff176/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fnanairoshop%2F20241205072233_114%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><img src="https://hbb.afl.rakuten.co.jp/hgb/5260af3a.00bcaa54.5260af3b.012ff176/?me_id=1426895&item_id=10097533&pc=https%3A%2F%2Fthumbnail.image.rakuten.co.jp%2F%400_mall%2Fnanairoshop%2Fcabinet%2Fr_2024051455%2F20241205072233_114_1.jpg%3F_ex%3D240x240&s=240x240&t=picttext" border="0" style="margin:2px" alt="[商品価格に関しましては、リンクが作成された時点と現時点で情報が変更されている場合がございます。]" title="[商品価格に関しましては、リンクが作成された時点と現時点で情報が変更されている場合がございます。]"></a></td><td style="vertical-align:top;width:248px;display: block;"><p style="font-size:12px;line-height:1.4em;text-align:left;margin:0px;padding:2px 6px;word-wrap:break-word"><a href="https://hb.afl.rakuten.co.jp/ichiba/5260af3a.00bcaa54.5260af3b.012ff176/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fnanairoshop%2F20241205072233_114%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;">Vordrassil R7 ブックスタンド 、ノートパソコンスタンド、 ipad スタンド 書見台、 本棚卓上、 本立て、高さ・角度調整可能、折りたたみ式＆持ち出し、勉強グッズ、姿勢改善、肩こりや目疲れを軽減する、デザインを読むために、 教科書、ヤクリ アルミニウム合金、 耐荷4KG</a><br><span >価格：7,512円（税込、送料無料)</span> <span style="color:#BBB">(2026/3/30時点)</span></p><div style="margin:10px;"><a href="https://hb.afl.rakuten.co.jp/ichiba/5260af3a.00bcaa54.5260af3b.012ff176/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fnanairoshop%2F20241205072233_114%2F&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ%3D%3D" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><img src="https://static.affiliate.rakuten.co.jp/makelink/rl.svg" style="float:left;max-height:27px;width:auto;margin-top:0" ></a><a href="https://hb.afl.rakuten.co.jp/ichiba/5260af3a.00bcaa54.5260af3b.012ff176/?pc=https%3A%2F%2Fitem.rakuten.co.jp%2Fnanairoshop%2F20241205072233_114%2F%3Fscid%3Daf_pc_bbtn&link_type=picttext&ut=eyJwYWdlIjoiaXRlbSIsInR5cGUiOiJwaWN0dGV4dCIsInNpemUiOiIyNDB4MjQwIiwibmFtIjoxLCJuYW1wIjoicmlnaHQiLCJjb20iOjEsImNvbXAiOiJkb3duIiwicHJpY2UiOjEsImJvciI6MSwiY29sIjoxLCJiYnRuIjoxLCJwcm9kIjowLCJhbXAiOmZhbHNlfQ==" target="_blank" rel="nofollow sponsored noopener" style="word-wrap:break-word;"><div style="float:right;width:41%;height:27px;background-color:#bf0000;color:#fff!important;font-size:12px;font-weight:500;line-height:27px;margin-left:1px;padding: 0 12px;border-radius:16px;cursor:pointer;text-align:center;"> 楽天で購入 </div></a></div></td></tr></table></div><br><p style="color:#000000;font-size:12px;line-height:1.4em;margin:5px;word-wrap:break-word"></p></td></tr></table>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-contents">
+  <div class="footer-right">
+    <p>My reading log</p>
+    <h4>Camille's Biblio</h4>  
+  </div>
+  <div class="footer-left">
+    <ul>
+      <li><a href="https://note.com/camille_new" class="mylink">note</a></li>
+      <li><a href="https://x.com/camille_in_note" class="mylink">X</a></li>
+      <li><a href="https://camille-product.github.io/film_log/" class="mylink">Film log</a></li>
+      <li><a href="https://room.rakuten.co.jp/room_1d5392cef6/items" class="mylink">Items</a></li>
+      <li><a href="https://linktr.ee/camillething" class="mylink">Linktree</a></li>
+    </ul>
+    
+    
+  </div>
+  </div>
+  <p class="copyright">©︎Camille</p>
+</footer>
+
+
+
+<!-- SETUP GUIDE -->
+ <!--
+<details class="setup-guide">
+  <summary>⚙️ スプレッドシート連携の設定方法</summary>
+  <div class="setup-guide-body">
+    <p><strong>① スプレッドシートの1行目（ヘッダー）</strong></p>
+    <pre>title | author | genre | year | cover | amazon | goodreads | comment</pre>
+
+    <p><strong>② 入力例</strong></p>
+    <pre>雪国 | 川端康成 | 文学 | 2025 | https://...画像URL | https://amazon... | https://goodreads... | 美しい描写に圧倒された</pre>
+
+    <p><strong>③ cover列について</strong></p>
+    <p>Amazon商品画像URLや他のCDNを使用する場合、CORSの問題で画像が表示されないことがあります。<br>
+    その場合は <strong>Google Driveに表紙画像をアップロードして共有URL</strong> を使うか、<strong>空欄</strong> にしてください（ジャンルの色が自動表示されます）。</p>
+
+    <p><strong>④ スプレッドシートをCSVとして公開</strong></p>
+    <ol>
+      <li>スプレッドシートを開き「ファイル → 共有 → ウェブに公開」</li>
+      <li>シート選択 → 形式を <strong>カンマ区切りの値（.csv）</strong> に設定</li>
+      <li>「公開」をクリックしてURLをコピー</li>
+    </ol>
+
+    <p><strong>⑤ このHTMLを編集</strong></p>
+    <pre>const SHEET_CSV_URL = "ここにコピーしたURLを貼る";</pre>
+
+    <p><strong>⑥ GitHub Pages / Netlify で公開</strong></p>
+    <ol>
+      <li>このHTMLファイルを <code>index.html</code> にリネーム</li>
+      <li>GitHubリポジトリにプッシュ → Settings → Pages → Deploy</li>
+      <li>または Netlify に <code>index.html</code> をドラッグ&ドロップ</li>
+    </ol>
+  </div>
+</details>
+-->
+
+<script>
+// ============================================================
+//  ジャンルごとの色定義（追加・変更可）
+// ============================================================
+const GENRE_PALETTE = {
+  "文学":           { bg: "#EAF3FB", text: "#185FA5" },
+  "SF":             { bg: "#EEEDFE", text: "#534AB7" },
+  "ミステリ":       { bg: "#FAECE7", text: "#993C1D" },
+  "ノンフィクション":{ bg: "#EAF3DE", text: "#3B6D11" },
+  "ビジネス":       { bg: "#FAEEDA", text: "#854F0B" },
+  "歴史":           { bg: "#FBF0D9", text: "#7A5010" },
+  "哲学":           { bg: "#F2EDF8", text: "#6B3FA0" },
+  "エッセイ":       { bg: "#FBE8EF", text: "#9B3058" },
+  "漫画":           { bg: "#E1F5EE", text: "#0F6E56" },
+  "その他":         { bg: "#F1EFE8", text: "#5F5E5A" },
+};
+
+const DEFAULT_COLOR = { bg: "#F1EFE8", text: "#5a5650" };
+
+function getGenreColor(genre) {
+  return GENRE_PALETTE[genre] || DEFAULT_COLOR;
+}
+
+// ============================================================
+//  CSV パーサー（RFC 4180 対応）
+// ============================================================
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuote) {
+      if (ch === '"' && text[i+1] === '"') { field += '"'; i++; }
+      else if (ch === '"') inQuote = false;
+      else field += ch;
+    } else {
+      if (ch === '"') inQuote = true;
+      else if (ch === ',') { row.push(field.trim()); field = ""; }
+      else if (ch === '\n') {
+        row.push(field.trim()); field = "";
+        if (row.some(c => c !== "")) rows.push(row);
+        row = [];
+      } else if (ch !== '\r') field += ch;
+    }
+  }
+  row.push(field.trim());
+  if (row.some(c => c !== "")) rows.push(row);
+  return rows;
+}
+
+function csvToBooks(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0].map(h => h.toLowerCase().trim());
+  const idx = (key) => headers.indexOf(key);
+  return rows.slice(1).map(r => ({
+    title:     r[idx("title")]     || "",
+    author:    r[idx("author")]    || "",
+    genre:     r[idx("genre")]     || "その他",
+    year:      parseInt(r[idx("year")]) || 0,
+    cover:     r[idx("cover")]     || "",
+    amazon:    r[idx("amazon")]    || "",
+    goodreads: r[idx("goodreads")] || "",
+    comment:   r[idx("comment")]  || "",
+  })).filter(b => b.title);
+}
+
+// ============================================================
+//  状態
+// ============================================================
+let allBooks   = [];
+let genres     = [];
+let activeGenre = "all";
+let activeYear  = "all";
+let sortMode    = "year_desc";
+let viewMode    = "grid";
+
+// ============================================================
+//  フィルタリング & ソート
+// ============================================================
+function filterBooks() {
+  return allBooks
+    .filter(b => {
+      const genreOk = activeGenre === "all" || b.genre === activeGenre;
+      let yearOk = false;
+      if (activeYear === "all") yearOk = true;
+      else if (activeYear === "before2024") yearOk = b.year > 0 && b.year <= 2023;
+      else yearOk = b.year === parseInt(activeYear);
+      return genreOk && yearOk;
+    })
+    .sort((a, b) => {
+      if (sortMode === "year_desc") return b.year - a.year;
+      if (sortMode === "year_asc")  return a.year - b.year;
+      if (sortMode === "title_asc") return a.title.localeCompare(b.title, "ja");
+      return 0;
+    });
+}
+
+// ============================================================
+//  描画 — グリッド
+// ============================================================
+function renderGrid(books) {
+  const el = document.getElementById("grid-view");
+  if (!books.length) { el.innerHTML = ""; return; }
+
+  el.innerHTML = books.map((b, i) => {
+    const c = getGenreColor(b.genre);
+    const coverHTML = b.cover
+      ? `<img src="${b.cover}" alt="${b.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=cover-fallback style=background:${c.bg}>📖</div><div class=cover-spine style=background:${c.text}></div>'">`
+      : `<div class="cover-fallback" style="background:${c.bg}">📖</div>`;
+    const links = [];
+    if (b.amazon)    links.push(`<a class="ext-link" href="${b.amazon}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Amazon</a>`);
+    if (b.goodreads) links.push(`<a class="ext-link" href="${b.goodreads}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Goodreads</a>`);
+
+    return `
+      <div class="book-card" style="animation-delay:${i*0.03}s" onclick="openModal(${i})">
+        <div class="book-cover">
+          ${coverHTML}
+          <div class="cover-spine" style="background:${c.text};opacity:.35;"></div>
+        </div>
+        <div class="book-body">
+          <div class="book-title">${b.title}</div>
+          <div class="book-author">${b.author}</div>
+          <div class="book-footer">
+            <span class="genre-badge" style="background:${c.bg};color:${c.text}">${b.genre}</span>
+            <span class="year-pill">${b.year || "—"}</span>
+          </div>
+          ${links.length ? `<div class="card-links">${links.join("")}</div>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// ============================================================
+//  描画 — リスト
+// ============================================================
+function renderList(books) {
+  const el = document.getElementById("list-view");
+  if (!books.length) { el.innerHTML = ""; return; }
+
+  el.innerHTML = books.map((b, i) => {
+    const c = getGenreColor(b.genre);
+    const thumbHTML = b.cover
+      ? `<img src="${b.cover}" alt="${b.title}" loading="lazy" onerror="this.innerHTML='<div class=row-thumb-fallback style=background:${c.bg}>📖</div><div class=row-thumb-spine style=background:${c.text}></div>'">`
+      : `<div class="row-thumb-fallback" style="background:${c.bg}">📖</div>
+         <div class="row-thumb-spine" style="background:${c.text};opacity:.35;"></div>`;
+    const links = [];
+    if (b.amazon)    links.push(`<a class="ext-link" href="${b.amazon}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Amazon</a>`);
+    if (b.goodreads) links.push(`<a class="ext-link" href="${b.goodreads}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Goodreads</a>`);
+
+    return `
+      <div class="book-row" style="animation-delay:${i*0.02}s" onclick="openModal(${i})">
+        <div class="row-thumb">${thumbHTML}</div>
+        <div class="row-main">
+          <div class="row-title">${b.title}</div>
+          <div class="row-sub">${b.author}
+            <span style="margin:0 4px;opacity:.4;">·</span>
+            <span style="background:${c.bg};color:${c.text};padding:1px 7px;border-radius:8px;font-size:11px;">${b.genre}</span>
+          </div>
+          ${b.comment ? `<div class="row-comment">${b.comment}</div>` : ""}
+        </div>
+        <div class="row-right">
+          <span class="year-tag">${b.year || "—"}</span>
+          ${links.length ? `<div class="row-links">${links.join("")}</div>` : ""}
+        </div>
+      </div>`;
+  }).join("");
+}
+
+// ============================================================
+//  メイン描画
+// ============================================================
+function render() {
+  const books = filterBooks();
+  const total  = allBooks.length;
+  const shown  = books.length;
+
+  document.getElementById("result-info").innerHTML =
+    `<strong>${shown}</strong> 冊表示中（全 ${total} 冊）`;
+
+  renderGrid(books);
+  renderList(books);
+
+  const isEmpty = shown === 0;
+  document.getElementById("empty-state").classList.toggle("hidden", !isEmpty);
+  document.getElementById("grid-view").classList.toggle("hidden", isEmpty || viewMode !== "grid");
+  document.getElementById("list-view").classList.toggle("hidden", isEmpty || viewMode !== "list");
+
+  // モーダル用に filtered books を記憶
+  window._displayedBooks = books;
+}
+
+// ============================================================
+//  ジャンルフィルター生成
+// ============================================================
+function buildGenreFilters() {
+  const wrap = document.getElementById("genre-filters");
+  const all = ["all", ...genres];
+  wrap.innerHTML = all.map(g => {
+    const label = g === "all" ? "すべて" : g;
+    return `<button class="pill${g === "all" ? " active" : ""}" data-genre="${g}">${label}</button>`;
+  }).join("");
+
+  wrap.addEventListener("click", e => {
+    const btn = e.target.closest(".pill");
+    if (!btn) return;
+    wrap.querySelectorAll(".pill").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    activeGenre = btn.dataset.genre;
+    render();
+  });
+}
+
+// ============================================================
+//  モーダル
+// ============================================================
+function openModal(idx) {
+  const b = window._displayedBooks[idx];
+  if (!b) return;
+  const c = getGenreColor(b.genre);
+
+  // cover
+  const coverEl = document.getElementById("modal-cover");
+  const closeBtn = `<button class="modal-close" id="modal-close">✕</button>`;
+  if (b.cover) {
+    coverEl.innerHTML = `<img src="${b.cover}" alt="${b.title}" onerror="this.parentElement.innerHTML='<div class=modal-cover-fallback style=background:${c.bg};font-size:60px>📖</div>${closeBtn}'">${closeBtn}`;
+  } else {
+    coverEl.innerHTML = `<div class="modal-cover-fallback" style="background:${c.bg}">📖</div>${closeBtn}`;
+  }
+  document.getElementById("modal-close").addEventListener("click", closeModal);
+
+  document.getElementById("modal-genre").textContent = b.genre;
+  document.getElementById("modal-genre").style.cssText = `background:${c.bg};color:${c.text}`;
+  document.getElementById("modal-title").textContent  = b.title;
+  document.getElementById("modal-author").textContent = b.author;
+
+  const commentWrap = document.getElementById("modal-comment-wrap");
+  if (b.comment) {
+    document.getElementById("modal-comment").textContent = b.comment;
+    commentWrap.classList.remove("hidden");
+  } else {
+    commentWrap.classList.add("hidden");
+  }
+
+  const meta = document.getElementById("modal-meta");
+  meta.innerHTML = `<span class="meta-chip">📅 ${b.year || "年不明"}</span>`;
+
+  const footer = document.getElementById("modal-footer");
+  const links = [];
+  if (b.amazon)    links.push(`<a class="modal-link" href="${b.amazon}" target="_blank" rel="noopener">Amazon で見る</a>`);
+  if (b.goodreads) links.push(`<a class="modal-link" href="${b.goodreads}" target="_blank" rel="noopener">Goodreads で見る</a>`);
+  footer.innerHTML = links.join("") || "";
+  footer.style.display = links.length ? "flex" : "none";
+
+  document.getElementById("modal-overlay").classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+document.getElementById("modal-overlay").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-overlay")) closeModal();
+});
+
+// ============================================================
+//  イベント — 読書年フィルター
+// ============================================================
+document.getElementById("year-filters").addEventListener("click", e => {
+  const btn = e.target.closest(".pill");
+  if (!btn) return;
+  document.querySelectorAll("#year-filters .pill").forEach(p => p.classList.remove("active"));
+  btn.classList.add("active");
+  activeYear = btn.dataset.year;
+  render();
+});
+
+// ============================================================
+//  イベント — ソート
+// ============================================================
+document.getElementById("sort-select").addEventListener("change", e => {
+  sortMode = e.target.value;
+  render();
+});
+
+// ============================================================
+//  イベント — 表示切替
+// ============================================================
+document.getElementById("grid-btn").addEventListener("click", () => {
+  viewMode = "grid";
+  document.getElementById("grid-btn").classList.add("active");
+  document.getElementById("list-btn").classList.remove("active");
+  render();
+});
+
+document.getElementById("list-btn").addEventListener("click", () => {
+  viewMode = "list";
+  document.getElementById("list-btn").classList.add("active");
+  document.getElementById("grid-btn").classList.remove("active");
+  render();
+});
+
+// ============================================================
+//  データ読み込み
+// ============================================================
+async function loadData() {
+  const loadingEl = document.getElementById("loading");
+  const errorEl   = document.getElementById("error");
+  const contentEl = document.getElementById("content");
+
+  // URLが未設定 → サンプルデータで表示
+  if (!SHEET_CSV_URL) {
+    allBooks = [
+      { title:"雪国", author:"川端康成", genre:"文学", year:2025, cover:"", amazon:"", goodreads:"", comment:"美しい表現に圧倒された。" },
+      { title:"三体", author:"劉慈欣", genre:"SF", year:2025, cover:"", amazon:"", goodreads:"", comment:"スケールの大きさに驚いた。" },
+      { title:"FACTFULNESS", author:"ハンス・ロスリング", genre:"ノンフィクション", year:2024, cover:"", amazon:"", goodreads:"", comment:"思い込みが覆される1冊。" },
+      { title:"ゼロ・トゥ・ワン", author:"ピーター・ティール", genre:"ビジネス", year:2024, cover:"", amazon:"", goodreads:"", comment:"スタートアップの本質を学んだ。" },
+      { title:"サピエンス全史", author:"ユヴァル・ノア・ハラリ", genre:"歴史", year:2023, cover:"", amazon:"", goodreads:"", comment:"人類の歩みを俯瞰できる。" },
+      { title:"ノルウェイの森", author:"村上春樹", genre:"文学", year:2023, cover:"", amazon:"", goodreads:"", comment:"" },
+      { title:"嫌われる勇気", author:"岸見一郎", genre:"哲学", year:2026, cover:"", amazon:"", goodreads:"", comment:"アドラー心理学の入門として最適。" },
+    ];
+    genres = [...new Set(allBooks.map(b => b.genre))];
+    buildGenreFilters();
+    document.getElementById("total-count").textContent = allBooks.length;
+    loadingEl.classList.add("hidden");
+    contentEl.classList.remove("hidden");
+    render();
+    return;
+  }
+
+  try {
+    // CORS プロキシなしで直接フェッチ（公開スプレッドシートなら動作する）
+    const res = await fetch(SHEET_CSV_URL);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    allBooks = csvToBooks(rows);
+
+    if (!allBooks.length) throw new Error("データが見つかりませんでした。ヘッダー行の列名を確認してください。");
+
+    genres = [...new Set(allBooks.map(b => b.genre).filter(Boolean))];
+    buildGenreFilters();
+    document.getElementById("total-count").textContent = allBooks.length;
+    loadingEl.classList.add("hidden");
+    contentEl.classList.remove("hidden");
+    render();
+  } catch (err) {
+    loadingEl.classList.add("hidden");
+    document.getElementById("error-msg").textContent = `読み込みエラー: ${err.message}`;
+    errorEl.classList.remove("hidden");
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
