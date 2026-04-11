@@ -543,8 +543,12 @@
       margin-top: 30px;
     }
     .bottom-affiliate{
-      background-color: #89847f;
-      border-radius: 10px;
+      
+    }
+
+    .rakuten{
+      margin-left: 1px;
+      margin-right: 1px;
     }
 
     /* ── EMPTY ── */
@@ -760,7 +764,44 @@
 
     .setup-guide-body strong { color: var(--ink); }
 
-    @media (max-width: 640px) {
+    /* スマホ・タブレット共通（〜1024px） */
+@media screen and (max-width: 1024px) {
+  .aff-contents {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .book-cover {
+      flex-shrink: 0;
+    }
+}
+
+/* タブレット（591px〜1024px） */
+@media screen and (min-width: 591px) and (max-width: 1024px) {
+  .site-header { flex-direction: column; align-items: flex-start; }
+  .controls-bar { flex-direction: column; align-items: flex-start; }
+  .right-controls { width: 100%; justify-content: flex-end; }
+  .grid-view { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; }
+  .book-row { grid-template-columns: 40px 1fr auto; }
+  .main { padding: 1.5rem 1.25rem 4rem; }
+  .site-header { padding: 2rem 1.25rem 1.5rem; }
+  .controls-bar { padding: 1rem 1.25rem; }
+}
+
+/* スマホ（〜590px） */
+@media screen and (max-width: 590px) {
+  .site-header { flex-direction: column; align-items: flex-start; padding: 1.5rem 1rem; height: auto; }
+  .controls-bar { flex-direction: column; align-items: flex-start; padding: 0.75rem 1rem; }
+  .right-controls { width: 100%; justify-content: flex-end; }
+  .grid-view { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+  .main { padding: 1rem 1rem 3rem; }
+  .aff { margin-left: 16px; margin-right: 16px; }
+  footer { margin-left: 16px; margin-right: 16px; }
+  .footer-contents { flex-direction: column; gap: 16px; }
+}
+
+@media (max-width: 640px) {
       .site-header { flex-direction: column; align-items: flex-start; }
       .controls-bar { flex-direction: column; align-items: flex-start; }
       .right-controls { width: 100%; justify-content: flex-end; }
