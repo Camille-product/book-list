@@ -764,50 +764,131 @@
 
     .setup-guide-body strong { color: var(--ink); }
 
-    /* スマホ・タブレット共通（〜1024px） */
+  /* ── RESPONSIVE ── */
+
+/* タブレット・スマホ共通（〜1024px）*/
 @media screen and (max-width: 1024px) {
+
+  /* アフィリエイトバナーを縦並び */
   .aff-contents {
     flex-direction: column;
     align-items: center;
     gap: 16px;
   }
 
-  .book-cover {
-      flex-shrink: 0;
-    }
+  /* バナー内の固定幅500pxを上書き */
+  .aff-contents > div,
+  .aff-contents > table {
+    width: 100% !important;
+    max-width: 500px;
+    box-sizing: border-box;
+  }
+
+  /* aff全体の横余白を縮める */
+  .aff {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  /* コントロールバーを折り返し */
+  .controls-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+    gap: 8px;
+  }
+
+  .right-controls {
+    width: 100%;
+    justify-content: flex-end;
+    margin-left: 0;
+  }
+
+  /* ヘッダー調整 */
+  .site-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 2rem 1.25rem 1.5rem;
+    height: auto;
+    min-height: 200px;
+  }
+
+  /* グリッドを少し小さく */
+  .grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 12px;
+  }
+
+  .main {
+    padding: 1.5rem 1.25rem 4rem;
+  }
 }
 
-/* タブレット（591px〜1024px） */
-@media screen and (min-width: 591px) and (max-width: 1024px) {
-  .site-header { flex-direction: column; align-items: flex-start; }
-  .controls-bar { flex-direction: column; align-items: flex-start; }
-  .right-controls { width: 100%; justify-content: flex-end; }
-  .grid-view { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; }
-  .book-row { grid-template-columns: 40px 1fr auto; }
-  .main { padding: 1.5rem 1.25rem 4rem; }
-  .site-header { padding: 2rem 1.25rem 1.5rem; }
-  .controls-bar { padding: 1rem 1.25rem; }
-}
+/* スマホ専用（〜600px）*/
+@media screen and (max-width: 600px) {
 
-/* スマホ（〜590px） */
-@media screen and (max-width: 590px) {
-  .site-header { flex-direction: column; align-items: flex-start; padding: 1.5rem 1rem; height: auto; }
-  .controls-bar { flex-direction: column; align-items: flex-start; padding: 0.75rem 1rem; }
-  .right-controls { width: 100%; justify-content: flex-end; }
-  .grid-view { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-  .main { padding: 1rem 1rem 3rem; }
-  .aff { margin-left: 16px; margin-right: 16px; }
-  footer { margin-left: 16px; margin-right: 16px; }
-  .footer-contents { flex-direction: column; gap: 16px; }
-}
+  .site-header {
+    padding: 1.5rem 1rem;
+    height: auto;
+  }
 
-@media (max-width: 640px) {
-      .site-header { flex-direction: column; align-items: flex-start; }
-      .controls-bar { flex-direction: column; align-items: flex-start; }
-      .right-controls { width: 100%; justify-content: flex-end; }
-      .grid-view { grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 12px; }
-      .book-row { grid-template-columns: 40px 1fr auto; }
-      .main { padding: 1.5rem 1.25rem 4rem; }
-      .site-header { padding: 2rem 1.25rem 1.5rem; }
-      .controls-bar { padding: 1rem 1.25rem; }
-    }
+  .site-title {
+    font-size: 42px;
+  }
+
+  .controls-bar {
+    padding: 0.75rem 0.75rem;
+  }
+
+  /* フィルターのpillが小さすぎないように */
+  .filter-group {
+    width: 100%;
+  }
+
+  .grid-view {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+
+  .book-row {
+    grid-template-columns: 40px 1fr auto;
+  }
+
+  .main {
+    padding: 1rem 0.75rem 3rem;
+  }
+
+  /* アフィリエイトの余白をさらに縮める */
+  .aff {
+    margin-left: 8px;
+    margin-right: 8px;
+    padding-top: 16px;
+  }
+
+  /* フッター縦並び */
+  footer {
+    margin-left: 16px;
+    margin-right: 16px;
+    margin-bottom: 40px;
+  }
+
+  .footer-contents {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Rakutenテーブルも幅100%に */
+  .rakuten,
+  .rakuten > tbody,
+  .rakuten > tbody > tr,
+  .rakuten > tbody > tr > td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .rakuten div[style] {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+}
